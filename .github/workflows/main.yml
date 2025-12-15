@@ -1,0 +1,25 @@
+name: Naukri Profile Update
+
+on:
+  schedule:
+    - cron: '25 3 * * *'   # 8:55 AM IST
+  workflow_dispatch:
+
+jobs:
+  run-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Run Selenium
+      run: mvn test
+      env:
+        NAUKRI_USER: ${{ secrets.NAUKRI_USER }}
+        NAUKRI_PASS: ${{ secrets.NAUKRI_PASS }}
