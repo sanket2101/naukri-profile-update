@@ -1,20 +1,23 @@
+package tests;
+
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.annotations.Test;
+import org.openqa.selenium.support.ui.*;
+import org.testng.annotations.*;
+import utils.DriverManager;
+import utils.TestListener;
 
 import java.time.Duration;
 
-public class NaukriProfileUpdate {
+@Listeners(TestListener.class)
+public class NaukriProfileUpdate extends BaseTest {
 
     @Test
     public void updateProfile() {
 
         ChromeOptions options = new ChromeOptions();
 
-        // Headless ONLY in GitHub Actions
         if (System.getenv("CI") != null) {
             options.addArguments("--headless=new");
             options.addArguments("--no-sandbox");
@@ -24,61 +27,59 @@ public class NaukriProfileUpdate {
         }
 
         WebDriver driver = new ChromeDriver(options);
+        DriverManager.setDriver(driver);   // ⭐ VERY IMPORTANT
+
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         JavascriptExecutor js = (JavascriptExecutor) driver;
 
         try {
-            /* 1️⃣ Open Login Page */
             driver.get("https://www.naukri.com/nlogin/login");
 
-            /* 2️⃣ Login */
+            String user = System.getenv("NAUKRI_USER");
+            String pass = System.getenv("NAUKRI_PASS");
+
+            // Fallback for local run
+            if (user == null || pass == null) {
+                throw new RuntimeException(
+                        "NAUKRI_USER / NAUKRI_PASS not set in environment");
+            }
+
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("usernameField")))
-                    .sendKeys(System.getenv("NAUKRI_USER"));
+                    .sendKeys(user);
 
             driver.findElement(By.id("passwordField"))
-                    .sendKeys(System.getenv("NAUKRI_PASS"));
+                    .sendKeys(pass);
 
             driver.findElement(By.xpath("//button[text()='Login']")).click();
 
-            /* 3️⃣ Wait for login success */
             wait.until(ExpectedConditions.urlContains("homepage"));
 
-            /* Click Complete Profile button */
             WebElement completeProfileBtn = wait.until(
                     ExpectedConditions.elementToBeClickable(
                             By.xpath("//*[self::button or self::a][contains(normalize-space(),'Complete profile')]")
                     )
             );
-
-// Use JS click for React UI
             js.executeScript("arguments[0].click();", completeProfileBtn);
 
 
-            /* 4️⃣ Click Edit Profile (pencil icon) */
-            WebElement editProfileIcon = wait.until(
-                    ExpectedConditions.elementToBeClickable(
-                            By.xpath("//em[@class='icon edit ']")
-                    )
+            WebElement editIcon = wait.until(
+                    ExpectedConditions.elementToBeClickable(By.xpath("//em[@class='icon edit ']"))
             );
-            js.executeScript("arguments[0].click();", editProfileIcon);
+            js.executeScript("arguments[0].click();", editIcon);
 
-            /* 5️⃣ Click Save button */
-            WebElement saveButton = wait.until(
-                    ExpectedConditions.visibilityOfElementLocated(
-                            By.xpath("//button[@id='saveBasicDetailsBtn']")
-                    )
+            WebElement saveBtn = wait.until(
+                    ExpectedConditions.elementToBeClickable(By.id("saveBasicDetailsBtn"))
             );
-            js.executeScript("arguments[0].click();", saveButton);
-
-            /* 6️⃣ Small wait to allow backend update */
-            Thread.sleep(2000);
+            js.executeScript("arguments[0].click();", saveBtn);
 
             System.out.println("Naukri profile edit & save completed successfully");
 
         } catch (Exception e) {
+
+            // 🔴 VERY IMPORTANT: rethrow exception
             e.printStackTrace();
-        } finally {
-            driver.quit();
+            throw e;   // <-- this ensures TestNG marks test as FAILED
         }
     }
+
 }
