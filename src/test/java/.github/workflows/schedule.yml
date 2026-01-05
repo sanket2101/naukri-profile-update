@@ -2,7 +2,7 @@ name: Naukri Profile Update
 
 on:
   schedule:
-    - cron: '25 3 * * *'   # 8:55 AM IST
+    - cron: '0 3,4,9 * * *' ✅ 8:30, 9:30, 2:30 (IST)
   workflow_dispatch:
 
 jobs:
