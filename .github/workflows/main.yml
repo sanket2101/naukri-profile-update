@@ -2,8 +2,8 @@ name: Naukri Profile Update
 
 on:
   schedule:
-    - cron: '25 3 * * *'   # 8:55 AM IST
-    - cron: '0 15 * * *'   # 8:30 P.M. IST
+    # 8:30 PM IST (UTC +5:30 → 15:00 UTC)
+    - cron: '0 15 * * *'
   workflow_dispatch:
 
 jobs:
@@ -11,34 +11,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'temurin'
+      - name: Set up Java 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
 
-    - name: Run Selenium Tests
-      run: mvn clean test
-      env:
-        NAUKRI_USER: ${{ secrets.NAUKRI_USER }}
-        NAUKRI_PASS: ${{ secrets.NAUKRI_PASS }}
-        EMAIL_USER:  ${{ secrets.EMAIL_USER }}
-        EMAIL_PASS:  ${{ secrets.EMAIL_PASS }}
+      - name: Run Selenium Tests
+        run: mvn clean test
+        env:
+          NAUKRI_USER: ${{ secrets.NAUKRI_USER }}
+          NAUKRI_PASS: ${{ secrets.NAUKRI_PASS }}
+          EMAIL_USER:  ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS:  ${{ secrets.EMAIL_PASS }}
 
-    # ⭐ OPTIONAL BUT RECOMMENDED (Artifacts)
-    - name: Upload Extent Report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ExtentReport
-        path: test-output/ExtentReport.html
+      # Always upload reports (even on failure)
+      - name: Upload Extent Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExtentReport
+          path: test-output/ExtentReport.html
 
-    - name: Upload Screenshots
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: Screenshots
-        path: screenshots/
+      - name: Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshots
+          path: screenshots/
